@@ -1,0 +1,167 @@
+name: 'Setup Development Environment'
+description: 'Installs all development tools required for the agrirouter project'
+author: 'DKE Data'
+
+inputs:
+  go-version:
+    description: 'Version of Go to install'
+    required: false
+    default: '1.24.6'
+  helm-version:
+    description: 'Version of Helm to install'
+    required: false
+    default: 'v3.14.2'
+  protoc-version:
+    description: 'Version of protoc to install'
+    required: false
+    default: '21.6'
+  protoc-gen-go-version:
+    description: 'Version of protoc-gen-go to install'
+    required: false
+    default: 'v1.28.1'
+  oapi-codegen-version:
+    description: 'Version of oapi-codegen to install'
+    required: false
+    default: 'v1.15.0'
+  go-test-coverage-version:
+    description: 'Version of go-test-coverage to install'
+    required: false
+    default: 'v2@latest'
+  lichen-version:
+    description: 'Version of lichen to install'
+    required: false
+    default: 'v0.1.7'
+
+outputs:
+  go-version:
+    description: 'The version of Go that was installed'
+    value: ${{ steps.setup-go.outputs.go-version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Go
+      id: setup-go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+        
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        # Update package lists
+        sudo apt-get update
+        
+        # Install basic tools
+        sudo apt-get install -y \
+          curl \
+          unzip \
+          jq \
+          openssl
+          
+    - name: Install Skaffold
+      shell: bash
+      run: |
+        # Detect architecture
+        ARCH=$(uname -m)
+        case $ARCH in
+          x86_64) SKAFFOLD_ARCH="amd64" ;;
+          aarch64|arm64) SKAFFOLD_ARCH="arm64" ;;
+          *) echo "Unsupported architecture: $ARCH" && exit 1 ;;
+        esac
+        
+        echo "Installing Skaffold for $SKAFFOLD_ARCH"
+        curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-${SKAFFOLD_ARCH}
+        sudo chmod +x skaffold
+        sudo mv skaffold /usr/local/bin/skaffold
+        skaffold version
+        
+    - name: Install Kustomize
+      shell: bash
+      run: |
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+        sudo mv kustomize /usr/local/bin/kustomize
+        kustomize version
+        
+    - name: Install Helm
+      shell: bash
+      run: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh --version ${{ inputs.helm-version }}
+        rm get_helm.sh
+        helm version
+        
+    - name: Install protoc
+      shell: bash
+      run: |
+        # Detect architecture
+        ARCH=$(uname -m)
+        case $ARCH in
+          x86_64) PROTOC_ARCH="x86_64" ;;
+          aarch64|arm64) PROTOC_ARCH="aarch_64" ;;
+          *) echo "Unsupported architecture: $ARCH" && exit 1 ;;
+        esac
+        
+        echo "Installing protoc for $PROTOC_ARCH"
+        PB_REL="https://github.com/protocolbuffers/protobuf/releases"
+        curl -L ${PB_REL}/download/v${{ inputs.protoc-version }}/protoc-${{ inputs.protoc-version }}-linux-${PROTOC_ARCH}.zip -o protoc.zip
+        unzip protoc.zip -d $HOME/.local
+        rm protoc.zip
+        sudo ln -sf $HOME/.local/bin/protoc /usr/local/bin/protoc
+        protoc --version
+        
+    - name: Install Go tools
+      shell: bash
+      run: |
+        echo "Installing Go tools..."
+        
+        # Install go-test-coverage
+        echo "Installing go-test-coverage ${{ inputs.go-test-coverage-version }}"
+        go install github.com/vladopajic/go-test-coverage/${{ inputs.go-test-coverage-version }}
+        sudo ln -sf $(go env GOPATH)/bin/go-test-coverage /usr/local/bin/go-test-coverage
+        
+        # Install oapi-codegen
+        echo "Installing oapi-codegen ${{ inputs.oapi-codegen-version }}"
+        go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@${{ inputs.oapi-codegen-version }}
+        sudo ln -sf $(go env GOPATH)/bin/oapi-codegen /usr/local/bin/oapi-codegen
+        
+        # Install protoc-gen-go
+        echo "Installing protoc-gen-go ${{ inputs.protoc-gen-go-version }}"
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@${{ inputs.protoc-gen-go-version }}
+        sudo ln -sf $(go env GOPATH)/bin/protoc-gen-go /usr/local/bin/protoc-gen-go
+        
+        # Install lichen
+        echo "Installing lichen ${{ inputs.lichen-version }}"
+        go install github.com/uw-labs/lichen@${{ inputs.lichen-version }}
+        sudo ln -sf $(go env GOPATH)/bin/lichen /usr/local/bin/lichen
+        
+    - name: Verify installations
+      shell: bash
+      run: |
+        echo "=== Verification Summary ==="
+        echo "Go version: $(go version)"
+        echo "Java version: $(java -version 2>&1 | head -n 1)"
+        echo "Skaffold version: $(skaffold version --output=json | jq -r '.version // "unknown"')"
+        echo "Kustomize version: $(kustomize version --short)"
+        echo "Helm version: $(helm version --short)"
+        echo "Protoc version: $(protoc --version)"
+        echo "jq version: $(jq --version)"
+        echo "OpenSSL version: $(openssl version)"
+        
+        echo ""
+        echo "=== Go Tools ==="
+        echo "go-test-coverage: $(which go-test-coverage && echo "✓ installed" || echo "✗ missing")"
+        echo "oapi-codegen: $(which oapi-codegen && echo "✓ installed" || echo "✗ missing")"
+        echo "protoc-gen-go: $(which protoc-gen-go && echo "✓ installed" || echo "✗ missing")"
+        echo "lichen: $(which lichen && echo "✓ installed" || echo "✗ missing")"
+
+branding:
+  icon: 'tool'
+  color: 'blue'
