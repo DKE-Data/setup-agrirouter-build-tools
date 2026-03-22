@@ -45,6 +45,7 @@ runs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ inputs.go-version }}
+        cache: false
         
     - name: Setup Java
       uses: actions/setup-java@v4
