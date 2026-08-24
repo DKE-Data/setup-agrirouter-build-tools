@@ -24,7 +24,7 @@ This GitHub Action installs all the development tools required for the agriroute
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - uses: dke-data/agrirouter-github-runner@main
   - name: Run your build commands
     run: |
@@ -37,7 +37,7 @@ steps:
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - uses: dke-data/agrirouter-github-runner@main
     with:
       go-version: '1.23.0'
@@ -85,7 +85,7 @@ runs-on: self-hosted
 ```yaml
 runs-on: ubuntu-latest  # or blacksmith runners
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - uses: dke-data/agrirouter-github-runner@main
   # ... rest of your workflow
 ```

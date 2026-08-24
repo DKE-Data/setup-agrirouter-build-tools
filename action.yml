@@ -42,13 +42,22 @@ runs:
   steps:
     - name: Setup Go
       id: setup-go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7
       with:
         go-version: ${{ inputs.go-version }}
         cache: false
-        
+
+    - name: Restore automatic Go toolchain selection
+      shell: bash
+      # actions/setup-go v6+ unconditionally exports GOTOOLCHAIN=local, which makes
+      # `go` refuse to build any repository whose go.mod requires a version newer
+      # than the go-version installed above. Several consumers of this action pin a
+      # newer go/toolchain directive than our default, so restore Go's own default
+      # ("auto") to keep the pre-v6 behaviour of fetching the required toolchain.
+      run: echo "GOTOOLCHAIN=auto" >> "$GITHUB_ENV"
+
     - name: Setup Java
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
         java-version: '17'
