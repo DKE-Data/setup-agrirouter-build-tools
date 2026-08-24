@@ -20,7 +20,7 @@ inputs:
     required: false
     default: 'v1.28.1'
   oapi-codegen-version:
-    description: 'Version of oapi-codegen to install'
+    description: 'Version of oapi-codegen to install (github.com/deepmap/oapi-codegen, v1 line)'
     required: false
     default: 'v1.15.0'
   go-test-coverage-version:
@@ -125,6 +125,12 @@ runs:
         sudo ln -sf $(go env GOPATH)/bin/go-test-coverage /usr/local/bin/go-test-coverage
         
         # Install oapi-codegen
+        # Deliberately still the v1 line (github.com/deepmap/oapi-codegen). v2 lives at
+        # github.com/oapi-codegen/oapi-codegen/v2 but cannot be adopted yet: it rewrites
+        # external $refs under components.securitySchemes into self-referencing pointers,
+        # dropping the openIdConnectUrl definitions from the embedded spec. Every agrirouter
+        # service uses that $ref pattern, so the request validator would reject all
+        # authenticated requests with "security scheme ... is not declared" (HTTP 403).
         echo "Installing oapi-codegen ${{ inputs.oapi-codegen-version }}"
         go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@${{ inputs.oapi-codegen-version }}
         sudo ln -sf $(go env GOPATH)/bin/oapi-codegen /usr/local/bin/oapi-codegen
