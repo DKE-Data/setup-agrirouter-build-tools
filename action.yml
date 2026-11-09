@@ -26,7 +26,7 @@ inputs:
   go-test-coverage-version:
     description: 'Version of go-test-coverage to install'
     required: false
-    default: 'v2@latest'
+    default: 'v2@v2.22.0'
   lichen-version:
     description: 'Version of lichen to install'
     required: false
