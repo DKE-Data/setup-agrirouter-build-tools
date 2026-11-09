@@ -18,7 +18,7 @@ are already present on the GitHub-hosted and blacksmith runner images.
 
 ### Go Tools
 
-- **go-test-coverage** (configurable, default: v2@latest)
+- **go-test-coverage** (configurable, default: v2@v2.22.0)
 - **oapi-codegen** (configurable, default: v1.15.0)
 - **protoc-gen-go** (configurable, default: v1.28.1)
 - **lichen** (configurable, default: v0.1.7)
@@ -62,7 +62,7 @@ steps:
 | `protoc-version` | Version of protoc to install | No | `21.6` |
 | `protoc-gen-go-version` | Version of protoc-gen-go to install | No | `v1.28.1` |
 | `oapi-codegen-version` | Version of oapi-codegen to install | No | `v1.15.0` |
-| `go-test-coverage-version` | Version of go-test-coverage to install | No | `v2@latest` |
+| `go-test-coverage-version` | Version of go-test-coverage to install | No | `v2@v2.22.0` |
 | `lichen-version` | Version of lichen to install | No | `v0.1.7` |
 
 ## Outputs
